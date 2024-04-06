@@ -2,6 +2,11 @@
 
 namespace sadi01\bidashboard\controllers;
 
+use sadi01\bidashboard\models\ReportBox;
+use sadi01\bidashboard\models\ReportDashboard;
+use sadi01\bidashboard\models\ReportBoxWidgets;
+use sadi01\bidashboard\models\ReportPage;
+use sadi01\bidashboard\models\ReportPageWidget;
 use sadi01\bidashboard\models\ReportWidget;
 use sadi01\bidashboard\models\ReportWidgetResult;
 use sadi01\bidashboard\models\ReportWidgetSearch;
@@ -100,7 +105,7 @@ class ReportWidgetController extends Controller
                         'view' => ['GET'],
                         'create' => ['GET','POST'],
                         'update' => ['GET','POST'],
-                        'delete' => ['POST', 'DELETE'],
+                        'delete' => ['GET','POST','DELETE'],
                         'open-modal' => ['GET'],
                         'run' =>  ['GET','POST'],
                         'modal-show-chart' => ['GET'],
@@ -222,29 +227,6 @@ class ReportWidgetController extends Controller
     }
 
     /**
-     * Deletes an existing ReportWidget model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
-     * @return Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionDelete($id)
-    {
-        $model = $this->findModel($id);
-        if ($model->canDelete() && $model->softDelete()) {
-            return $this->asJson([
-                'status' => true,
-                'message' => Yii::t("biDashboard", 'Item Deleted')
-            ]);
-        } else {
-            return $this->asJson([
-                'status' => false,
-                'message' => Yii::t("biDashboard", 'Error In Delete Action')
-            ]);
-        }
-    }
-
-    /**
      * Finds the ReportWidget model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param int $id ID
@@ -292,11 +274,14 @@ class ReportWidgetController extends Controller
     {
         $model = $this->findModel($id);
         $runWidget = $model->lastResult($start_range, $end_range);
-        $result = array_reverse($runWidget->result);
+        $result = [];
+        if ($runWidget) {
+            $result = array_reverse($runWidget->result);
+        }
         $arrayResult = null;
         $arrayTitle = null;
 
-        if ($result) {
+        if (!empty($result)) {
             $arrayResult = array_map(function ($item) use ($field) {
                 return (int)$item[$field];
             }, $result);
@@ -308,14 +293,14 @@ class ReportWidgetController extends Controller
                     return $item["month_name"];
                 }
             }, $result);
-        }
 
-        if ($chart_type == ReportWidgetResult::CHART_PIE) {
-            $result_pie = [];
-            foreach ($result as $key => $item) {
-                $result_pie[] = ['name' => $arrayTitle[$key], 'y' => $arrayResult[$key]];
+            if ($chart_type == ReportWidgetResult::CHART_PIE) {
+                $result_pie = [];
+                foreach ($result as $key => $item) {
+                    $result_pie[] = ['name' => $arrayTitle[$key], 'y' => $arrayResult[$key]];
+                }
+                $arrayResult = $result_pie;
             }
-            $arrayResult = $result_pie;
         }
 
         return $this->renderAjax('_chart', [
@@ -328,6 +313,35 @@ class ReportWidgetController extends Controller
             'field' => $field,
             'start_range' => $start_range,
             'end_range' => $end_range,
+        ]);
+    }
+
+    public function actionDelete($id)
+    {
+        $widget = $this->findModel($id);
+
+        $pages = $widget->reportPages;
+        $dashboards = $widget->reportDashboards;
+
+        if ($widget->load($this->request->post()) && $widget->validate()) {
+            if ($widget->canDelete() && $widget->softDelete()) {
+                return $this->asJson([
+                    'status' => true,
+                    'message' => Yii::t("biDashboard", 'Widget Deleted')
+                ]);
+            } else {
+                return $this->asJson([
+                    'status' => false,
+                    'message' => Yii::t("biDashboard", 'Error In Delete Action')
+                ]);
+            }
+        }
+
+        $this->performAjaxValidation($widget);
+        return $this->renderAjax('delete', [
+            'model' => $widget,
+            'pages' => $pages,
+            'dashboards' => $dashboards,
         ]);
     }
 }

@@ -38,7 +38,9 @@ use yii2tech\ar\softdelete\SoftDeleteBehavior;
  *
  * @property string $outputColumnTitle
  * @property ReportPage[] $reportPages
+ * @property ReportDashboard[] $reportDashboards
  * @property ReportPageWidget[] $reportPageWidgets
+ * @property ReportBoxWidget[] $reportBoxWidgets
  * @property ReportWidgetResult[] $reportWidgetResults
  *
  * @mixin SoftDeleteBehavior
@@ -81,7 +83,7 @@ class ReportWidget extends ActiveRecord
             [['slave_id'], 'default', 'value' => function () {
                 return Yii::$app->params['bi_slave_id'] ?? null;
             }],
-            [['title', 'search_model_method', 'search_model_class', 'search_route', 'range_type'], 'required'],
+            [['title', 'search_model_method', 'search_model_class', 'search_route', 'range_type', 'slave_id'], 'required'],
             [['title'], 'required', 'on' => $this::SCENARIO_UPDATE],
             [['description'], 'safe', 'on' => $this::SCENARIO_UPDATE],
             ['search_model_method', 'validateSearchModelMethod'],
@@ -143,7 +145,8 @@ class ReportWidget extends ActiveRecord
      */
     public function getReportPages()
     {
-        return $this->hasMany(ReportPage::class, ['widget_id' => 'id']);
+        return $this->hasMany(ReportPage::class, ['id' => 'page_id'])
+            ->via('reportPageWidgets');
     }
 
     /**
@@ -154,6 +157,23 @@ class ReportWidget extends ActiveRecord
     public function getReportPageWidgets()
     {
         return $this->hasMany(ReportPageWidget::class, ['widget_id' => 'id']);
+    }
+
+    public function getReportBoxWidgets()
+    {
+        return $this->hasMany(ReportBoxWidgets::class, ['widget_id' => 'id']);
+    }
+
+    public function getReportBoxes()
+    {
+        return $this->hasMany(ReportBox::class, ['id' => 'box_id'])
+            ->via('reportBoxWidgets');
+    }
+
+    public function getReportDashboards()
+    {
+        return $this->hasMany(ReportDashboard::class, ['id' => 'dashboard_id'])
+            ->via('reportBoxes');
     }
 
     /**
