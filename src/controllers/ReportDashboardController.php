@@ -124,7 +124,7 @@ class ReportDashboardController extends Controller
 
             $box->lastDateSet = $box->getLastDateSet($box->last_date_set);
 
-            if ($box->display_type == ReportBox::DISPLAY_CHART)
+            if ($box->display_type == ReportBox::DISPLAY_CHART && ($box->chart_type != ReportBox::CHART_PIE && $box->chart_type != ReportBox::CHART_WORD_CLOUD))
                 $box->chartCategories = $box->getChartCategories($box->lastDateSet['year'],$box->lastDateSet['month']);
 
             if ($box->range_type == ReportBox::RANGE_TYPE_DAILY){
@@ -134,24 +134,26 @@ class ReportDashboardController extends Controller
                     $box->rangeDateCount = count($this->getMonthDaysByDateArray($box->getStartAndEndTimeStampsForStaticDate($box->date_type)));
             }
 
-            foreach ($box->boxWidgets as $widget){
+            foreach ($box->boxWidgets as $boxWidget){
 
-                $widget->setWidgetProperties();
-                if ($box->date_type == ReportBox::DATE_TYPE_FLEXIBLE)
-                    $date_array = $widget->getStartAndEndTimestamps($widget, $box->lastDateSet['year'], $box->lastDateSet['month'], $box->lastDateSet['day']);
-                else
-                    $date_array = $box->getStartAndEndTimeStampsForStaticDate($box->date_type);
+                if (isset($boxWidget->widget)){
+                    $boxWidget->setWidgetProperties();
+                    if ($box->date_type == ReportBox::DATE_TYPE_FLEXIBLE || $box->date_type == ReportBox::DATE_TYPE_FLEXIBLE_YEAR)
+                        $date_array = $boxWidget->getStartAndEndTimestamps($boxWidget, $box->lastDateSet['year'], $box->lastDateSet['month'], $box->lastDateSet['day']);
+                    else
+                        $date_array = $box->getStartAndEndTimeStampsForStaticDate($box->date_type);
 
-                $lastResult = $widget->widget->lastResult($date_array['start'], $date_array['end']);
-                $widgetLastResult = $lastResult ? $lastResult->add_on['result'] : [];
-                $results = array_reverse($widgetLastResult);
+                    $lastResult = $boxWidget->widget->lastResult($date_array['start'], $date_array['end']);
+                    $widgetLastResult = $lastResult ? $lastResult->add_on['result'] : [];
+                    $results = array_reverse($widgetLastResult);
 
-                if (!empty($results)) {
-                    $widget->collectResults($widget, $results);
-                }
+                    if (!empty($results)) {
+                        $boxWidget->collectResults($boxWidget, $results);
+                    }
 
-                if ($widget->errors) {
-                    $errors[] = $widget->errors;
+                    if ($boxWidget->errors) {
+                        $errors[] = $boxWidget->errors;
+                    }
                 }
             }
 
@@ -171,6 +173,8 @@ class ReportDashboardController extends Controller
             }
         }
 
+
+
         return $this->render('view', [
             'model' => $model,
             'boxes' => $boxes,
@@ -184,7 +188,6 @@ class ReportDashboardController extends Controller
     public function actionCreate()
     {
         $model = new ReportDashboard();
-
         if ($model->load($this->request->post()) && $model->validate()) {
 
             if($model->save())
@@ -208,7 +211,6 @@ class ReportDashboardController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
-
         if ($model->load($this->request->post()) && $model->validate()) {
             if ($model->save(false)) {
                 return $this->asJson([

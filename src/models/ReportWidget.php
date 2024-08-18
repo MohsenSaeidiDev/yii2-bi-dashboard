@@ -186,6 +186,24 @@ class ReportWidget extends ActiveRecord
         return $this->hasMany(ReportWidgetResult::class, ['widget_id' => 'id']);
     }
 
+    public function softDeleteRelatedBoxWidgets()
+    {
+        $transaction = \Yii::$app->db->beginTransaction();
+        try {
+            foreach ($this->reportBoxWidgets as $boxWidget) {
+                if (!$boxWidget->softDelete()) {
+                    throw new \Exception('Failed to soft delete a related box widget.');
+                }
+            }
+            $transaction->commit();
+            return true;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+            return false;
+        }
+    }
+
     public function getOutputColumnTitle(string $field): string
     {
         foreach ($this->add_on['outputColumn'] as $column) {
@@ -198,6 +216,16 @@ class ReportWidget extends ActiveRecord
         $searchModel = new ($this->search_model_class);
 
         return $searchModel->getAttributeLabel($field);
+    }
+
+    public static function getWidgetFields($widgetId) : Array
+    {
+        $fields = [];
+        $widget = self::find()->where(['id' => $widgetId])->one();
+        foreach ($widget->add_on['outputColumn'] as $column) {
+            $fields[] = $column['column_name'];
+        }
+        return $fields;
     }
 
     /**

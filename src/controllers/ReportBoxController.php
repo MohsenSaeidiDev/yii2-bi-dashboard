@@ -238,7 +238,6 @@ class ReportBoxController extends Controller
                 $box->rangeDateCount = count($this->getMonthDaysByDateArray($box->getStartAndEndTimeStampsForStaticDate($box->date_type)));
         }
 
-
         foreach ($box->boxWidgets as $boxWidget){
 
             $boxWidget->setWidgetProperties();
@@ -329,7 +328,9 @@ class ReportBoxController extends Controller
         if (isset($_POST['depdrop_parents'])) {
 
             $display_type = $_POST['depdrop_parents'][0];
-            if ($display_type == ReportBox::DISPLAY_CARD)
+            $chart_type = $_POST['depdrop_parents'][1];
+
+            if ($display_type == ReportBox::DISPLAY_CARD || $chart_type == ReportBox::CHART_PIE || $chart_type == ReportBox::CHART_WORD_CLOUD)
             {
                 $dateTypes = ReportBox::itemAlias('DateTypes');
                 foreach ($dateTypes as $key => $dateType){
@@ -339,7 +340,7 @@ class ReportBoxController extends Controller
                     ];
                 }
             }
-            elseif ($display_type == ReportBox::DISPLAY_CHART || $display_type == ReportBox::DISPLAY_TABLE)
+            elseif ($display_type == ReportBox::DISPLAY_CHART && $chart_type != ReportBox::CHART_PIE && $chart_type != ReportBox::CHART_WORD_CLOUD || $display_type == ReportBox::DISPLAY_TABLE)
             {
                 $out[] = [
                     "id" => ReportBox::DATE_TYPE_FLEXIBLE,

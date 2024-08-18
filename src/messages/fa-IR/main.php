@@ -203,6 +203,7 @@ return [
     'Row' => 'ردیف',
     'Rials' => 'ریال',
     'Dashboard List' => 'لیست داشبورد ها',
+    'Widget List' => 'لیست ویجت ها',
     'Dashboard Name' => 'نام داشبورد',
     'Dashboard ID' => 'شناسه داشبورد',
     'Page ID' => 'شناسه صفحه',
@@ -221,9 +222,11 @@ return [
     'Last Month' => 'ماه قبل',
     'This Year' => 'سال جاری',
     'Last Year' => 'سال قبل',
+    'Flexible Year' => 'سال قابل انتخاب',
     'Date Type' => 'نوع تاریخ',
     'Export Excel File' => 'خروجی اکسل',
     'It is not possible to move' => 'امکان جابجایی وجود ندارد',
     'No Data' => 'داده ای برای نمایش وجود ندارد',
     'Please run widget/widgets first' => 'لطفا ابتدا ویجت/ویجت ها را اجرا کنید',
+    'Invalid Widget Field' => 'فیلد خروجی ویجت نامعتبر است'
 ];
